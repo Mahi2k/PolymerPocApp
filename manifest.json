@@ -1,0 +1,7 @@
+{
+  "name": "PolymerpocApp",
+  "short_name": "PolymerpocApp",
+  "description": "Just a Demo",
+  "start_url": "/",
+  "display": "standalone"
+}

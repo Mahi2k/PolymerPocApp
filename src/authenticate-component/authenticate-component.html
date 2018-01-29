@@ -1,0 +1,183 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+
+<dom-module id="authenticate-component">
+    <template>
+      <style>
+      :host {
+        display: block;
+      }
+
+      #contextDetails{
+    margin-top:.5cm;
+    }
+
+    .displayText{
+    padding:2px;
+    line-height: 1%;
+    width:200px;
+    display: inline-block;
+    }
+    
+    paper-button.green {
+    background-color: var(--paper-blue-500);
+    color: white;
+    }
+
+    .mainContainer{
+        width:50%;
+        margin:0px auto 0px auto;
+    }
+
+    paper-button[disabled] {
+        background-color: var(--paper-black-500);
+    }
+    </style>
+    
+
+    <iron-ajax content-type="application/json" handle-as="json" on-response="handleResponse" on-error="handleError" method="POST" debounce-duration="300" id="ironAjax"></iron-ajax>
+    
+    <paper-input label="Base Api Url"  value={{baseApiUrl}}>
+        <iron-icon icon="accessibility" slot="prefix"></iron-icon>
+    </paper-input>
+
+    <div id="contextDetails">
+        <div class="displayText">
+            <paper-input label="ContextName"  value={{contextDetails.contextName}}>
+            <iron-icon icon="account-balance" slot="prefix"></iron-icon>
+            </paper-input>
+        </div>
+        <div class="displayText">
+            <paper-input label="UserName"  value={{contextDetails.userName}}>
+                <iron-icon icon="mail" slot="prefix"></iron-icon>
+            </paper-input>
+        </div>
+        <div class="displayText"><paper-input label="Password" type="password" value={{contextDetails.password}}>
+        <iron-icon icon="accessibility" slot="prefix"></iron-icon>
+        </paper-input></div> 
+        <div class="displayText">
+            <paper-input label="ContextId"  char-counter maxlength="5" value={{contextDetails.contextId}}>
+                <iron-icon icon="build" slot="prefix"></iron-icon>
+            </paper-input>
+        </div>  
+        <paper-button raised class="green" on-tap="onAuthenticateContextBtnClick" id="authContext">Authenticate Via ContextName</paper-button>
+        
+    </div>  
+
+    <br/>   
+
+    <template is="dom-if" if="{{_isNotNull(contextDetails.authenticationToken)}}" restamp>
+            <p id="tokenSpan"><b>AuthenticationToken To Be Used</b> : {{contextDetails.authenticationToken}}</p>    
+    </template>
+
+    <template is="dom-if" if="{{error.showMessage}}" restamp>
+            <p id="tokenSpan">Oops..! [[error.code]] : [[error.message]]</p>
+    </template>
+
+    </template>
+
+    <script>
+        /**
+         * `authenticate-component`
+         * Component to authenticate Mystique Api&#39;s
+         *
+         * @customElement
+         * @polymer
+         * @demo demo/index.html
+         */
+        class AuthenticateComponent extends Polymer.Element {
+            static get is() {
+                return 'authenticate-component';
+            }
+            static get properties() {
+
+                return {
+                    baseApiUrl: {
+                        type: String,
+                        value: 'http://demo.travelnxt.com'
+                    },
+
+                    contextDetails: {
+                        type: Object,
+                        value: {
+                            contextName: "bookairfare",
+                            userName: "mtandon",
+                            password: "zaq1ZAQ!",
+                            contextId: 1466,
+                            authenticationToken: ""
+                        }
+                    },
+
+                    error: {
+                        type: Object,
+                        value: {
+                            showMessage: false,
+                            message: "Some Error Occurred..!",
+                            code: 0
+                        }
+                    }
+                };
+            }
+
+            onAuthenticateContextBtnClick() {
+                var ironAjax = this.shadowRoot.querySelector('#ironAjax');
+                var contextAuthenticateButton = this.shadowRoot.querySelector('#authContext');
+                contextAuthenticateButton.classList.add("disabled");
+                ironAjax.url = this.baseApiUrl.trim() + "/api/Authentication/Authenticate/context";
+
+                ironAjax.body = {
+                    "name": this.contextDetails.contextName,
+                    "CID": this.contextDetails.contextId
+                };
+                let request = ironAjax.generateRequest();
+            }
+
+            onAuthenticateUserNameBtnClick() {
+                var ironAjax = this.shadowRoot.querySelector('#ironAjax');
+                ironAjax.url = this.baseApiUrl.trim() + "/api/Authentication/Authenticate/user";
+                ironAjax.body = {
+                    "UserCredentials": {
+                        "UserName": this.contextDetails.userName,
+                        "Password": this.contextDetails.password
+                    }
+                }
+                let request = ironAjax.generateRequest();
+            }
+
+            handleResponse(data) {
+                if (data.detail.response.status.isSuccessful) {
+                    this.set('contextDetails.authenticationToken', data.detail.response.authenticationToken);
+                    this.set('error.showMessage', false);
+                    this.set('error.code', 0);
+                    var paperTabs = this.shadowRoot.querySelector('#paper-tabs');
+                    this.dispatchEvent(new CustomEvent('token-authenticated', {
+                        token: data.detail.response.authenticationToken
+                    }));
+
+                } else {
+                    this.set('contextDetails.authenticationToken', "");
+                    this.set('error.showMessage', true);
+                    this.set('error.message', data.detail.response.status.message);
+                    this.set('error.code', data.detail.response.status.code);
+                }
+
+            }
+
+            handleError(data) {
+                this.set('contextDetails.authenticationToken', "");
+                this.set('error.showMessage', true);
+                this.set('error.message', "Ajax Call Failed, Please check for correct Syntax..!!");
+
+            }
+
+            _isNotNull(tokenToCheck) {
+                return tokenToCheck != "" ? true : false;
+            }
+        }
+
+        window.customElements.define(AuthenticateComponent.is, AuthenticateComponent);
+    </script>
+</dom-module>

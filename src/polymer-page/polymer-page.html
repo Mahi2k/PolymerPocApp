@@ -1,0 +1,133 @@
+<link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../../bower_components/paper-tabs/paper-tabs.html">
+<link rel="import" href="../../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../authenticate-component/authenticate-component.html">
+<link rel="import" href="../search-component/search-component.html">
+
+<dom-module id="polymer-page">
+    <template>
+    <style>
+    :host {
+        display: block;
+        padding: 0px;
+        margin: 0px;
+    }
+
+    .mainContainer{
+        width:100%;
+        margin:0px auto 0px auto;
+    }
+
+      paper-tabs {
+        font-family: 'Roboto', 'Noto', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        width: 100%;
+        background-color:var(--paper-blue-500);
+        text-transform: uppercase;
+        margin-bottom: 1px;
+    }
+
+    paper-tabs[disabled] {
+        font-family: 'Roboto', 'Noto', sans-serif;
+        -webkit-font-smoothing: antialiased;
+        width: 100%;
+        background-color:var(--paper-gray-500);
+        text-transform: uppercase;
+        margin-bottom: 1px;
+    }
+
+    paper-button[disabled] {
+        background-color: var(--paper-black-500);
+    }
+    </style>
+
+    <paper-tabs class="mainContainer" selected="{{tabSelected}}" autoselect scrollable>
+        <paper-tab>Authenticate</paper-tab>
+        <paper-tab disabled$="{{!_isAuthenticated}}">Fetch Result</paper-tab>
+        <paper-tab disabled$="{{!_productAdded}}">Book</paper-tab>
+        <paper-tab disabled$="{{!_bookingCompleted}}">Confirmation</paper-tab>
+    </paper-tabs>
+
+
+    <iron-pages selected="{{tabSelected}}" attr-for-selected="page-name" fallback-selection="fallback">
+        <div page-name="0">
+            <div class="mainContainer">
+                <authenticate-component on-token-authenticated="_redirectToResults"></authenticate-component>
+            </div>
+    </div>
+
+    <div page-name="1">
+        <div class="mainContainer">
+            <search-component token={{tokenTobeUsed}}></search-component>
+        </div>
+    </div>
+
+    <div page-name="2">
+        <div class="mainContainer">
+            Payment Page
+        </div>
+    </div>
+
+    <div page-name="3">
+        <div class="mainContainer">
+            Confirmation Details
+        </div>
+    </div>
+    </iron-pages>
+    </template>
+
+    <script>
+        /**
+         * `polymer-poc`
+         * This is just an POC element for learning Polymer
+         *
+         * @customElement
+         * @polymer
+         * @demo demo/index.html
+         */
+        class PolymerPage extends Polymer.Element {
+            static get is() {
+                return 'polymer-page';
+            }
+            static get properties() {
+                return {
+                    tabSelected: {
+                        type: String,
+                        value: "0"
+                    },
+                    _isAuthenticated: {
+                        type: Boolean,
+                        value: true
+                    },
+                    _productAdded: {
+                        type: Boolean,
+                        value: true
+                    },
+                    _bookingCompleted: {
+                        type: Boolean,
+                        value: true
+                    },
+                    tokenTobeUsed: {
+                        type: String,
+                        value: null
+                    }
+
+                }
+            }
+
+            _redirectToResults(event) {
+                var token = event.srcElement.contextDetails.authenticationToken;
+                if (token) {
+                    this.tabSelected = "1";
+                    this.set("tokenTobeUsed", token);
+                    this._isAuthenticated = true;
+                    console.log(this.tokenTobeUsed);
+                }
+            }
+        }
+
+        window.customElements.define(PolymerPage.is, PolymerPage);
+    </script>
+</dom-module>
